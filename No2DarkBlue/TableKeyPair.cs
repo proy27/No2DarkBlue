@@ -6,18 +6,28 @@ using System.Threading.Tasks;
 
 namespace No2DarkBlue
 {
-    public class TableKeyPair
-    {
-        public string RowKey { get; set; }
-        public string PartitionKey { get; set; }
+	public class TableKeyPair
+	{
+		public string RowKey { get; set; }
+		public string PartitionKey { get; set; }
 
-        public TableKeyPair(string rowKey, string partitionKey)
-        {
+		public TableKeyPair(string rowKey, string partitionKey)
+		{
 
-            //檢查參數是否傳入正確
-            if (string.IsNullOrEmpty(rowKey)) throw new ArgumentNullException(nameof(rowKey));
-            RowKey = rowKey;
-            PartitionKey = partitionKey;
-        }
-    }
+			//檢查參數是否傳入正確
+			if (string.IsNullOrEmpty(rowKey)) throw new ArgumentNullException(nameof(rowKey));
+			RowKey = rowKey;
+			PartitionKey = partitionKey;
+		}
+	}
+	public class _
+	{
+		public string connectionString { get; set; }
+		public string tableName { get; set; }
+		public _(string connectionString, string tableName)
+		{
+			this.connectionString = connectionString;
+			this.tableName = tableName;
+		}
+	}
 }

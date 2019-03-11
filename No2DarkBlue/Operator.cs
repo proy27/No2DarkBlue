@@ -8,307 +8,315 @@ using System.Linq;
 namespace No2DarkBlue
 {
 
-    public class Operator
-    {
-
-        public CloudStorageAccount CSAgent = null;
-        public CloudTableClient CTClient = null;
-
-        public string TableName { get; set; }
-        public CloudTable CTable = null;
-        public Operator(string connectionString, string tableName, bool autoCreateTable = false)
-        {
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new Exception("connectionString cannot be empty.");
-            }
-            if (string.IsNullOrEmpty(tableName))
-            {
-                throw new Exception("tableName cannot be empty.");
-            }
-
-            try
-            {
-                TableName = tableName;
-                CSAgent = CloudStorageAccount.Parse(connectionString);
-                CTClient = CSAgent.CreateCloudTableClient();
-                CTable = CTClient.GetTableReference(TableName);
-
-                if (autoCreateTable)
-                {
-
-                    if (!CTable.ExistsAsync().Result)
-                    {
-                        var res = CTable.CreateIfNotExistsAsync().Result;
-                    }
-
-
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("No2DarkBlue can't create table : " + ex.Message);
-            }
-        }
-
-        public void CreateTable()
-        {
-
-            CTable = CTClient.GetTableReference(TableName);
-            try
-            {
-                if (!CTable.ExistsAsync().Result)
-                {
-                    var res = CTable.CreateIfNotExistsAsync().Result;
-                }
-
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        /// <summary>
-        /// Update data with confirm Etag
-        /// 修改資料，並且確保資料的一致性的更新
-        /// 請注意:如果資料庫沒有該資料會 throw Exception
-        /// 所以建議你的做法就是 取出來 該資料 確保該 Etag 是最新的，如果出錯就是代表
-        /// 你的 ETag 不是最新或是根本沒有那筆資料
-        /// </summary>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        public void UpdateWithConfirmETag(DTableEntity data)
-        {
-            //檢查參數是否傳入正確
-            if (data == null) throw new ArgumentNullException(nameof(data));
-            if (string.IsNullOrEmpty(data.RowKey)) throw new ArgumentNullException(nameof(data.RowKey));
-
-            try
-            {
-
-                var operation = TableOperation.Replace(data);
-
-
-                var res = CTable.ExecuteAsync(operation).Result;
-
-            }
-            catch (Exception ex)
-            {
-
-                throw ex;
-
-            }
-            finally
-            {
-                // DataWriter.DelLock(Role.RoleKey, Collection, id);
-            }
-
-
-        }
-
-
-
-        /// <summary>
-        /// Update data.
-        /// 修改資料
-        /// </summary>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        public Operator Update(ITableEntity data)
-        {
-            //檢查參數是否傳入正確
-            if (data == null) throw new ArgumentNullException(nameof(data));
-            if (string.IsNullOrEmpty(data.RowKey)) throw new ArgumentNullException(nameof(data.RowKey));
-            if (string.IsNullOrEmpty(data.ETag))
-            {
+	public class Operator
+	{
+
+		public CloudStorageAccount CSAgent = null;
+		public CloudTableClient CTClient = null;
+
+		public string TableName { get; set; }
+		public CloudTable CTable = null;
+		public Operator(_ _, bool autoCreateTable = false)
+		{
+			_Operator(_.connectionString, _.tableName, autoCreateTable);
+		}
+		public Operator(string connectionString, string tableName, bool autoCreateTable = false)
+		{
+			_Operator(connectionString, tableName, autoCreateTable);
+		}
+		private void _Operator(string connectionString, string tableName, bool autoCreateTable = false)
+		{
+			if (string.IsNullOrEmpty(connectionString))
+			{
+				throw new Exception("connectionString cannot be empty.");
+			}
+			if (string.IsNullOrEmpty(tableName))
+			{
+				throw new Exception("tableName cannot be empty.");
+			}
+
+			try
+			{
+				TableName = tableName;
+				CSAgent = CloudStorageAccount.Parse(connectionString);
+				CTClient = CSAgent.CreateCloudTableClient();
+				CTable = CTClient.GetTableReference(TableName);
+
+				if (autoCreateTable)
+				{
+
+					if (!CTable.ExistsAsync().Result)
+					{
+						var res = CTable.CreateIfNotExistsAsync().Result;
+					}
+
+
+				}
+			}
+			catch (Exception ex)
+			{
+				throw new Exception("No2DarkBlue can't create table : " + ex.Message);
+			}
+		}
+
+		public void CreateTable()
+		{
+
+			CTable = CTClient.GetTableReference(TableName);
+			try
+			{
+				if (!CTable.ExistsAsync().Result)
+				{
+					var res = CTable.CreateIfNotExistsAsync().Result;
+				}
+
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Update data with confirm Etag
+		/// 修改資料，並且確保資料的一致性的更新
+		/// 請注意:如果資料庫沒有該資料會 throw Exception
+		/// 所以建議你的做法就是 取出來 該資料 確保該 Etag 是最新的，如果出錯就是代表
+		/// 你的 ETag 不是最新或是根本沒有那筆資料
+		/// </summary>
+		/// <param name="data"></param>
+		/// <returns></returns>
+		public void UpdateWithConfirmETag(DTableEntity data)
+		{
+			//檢查參數是否傳入正確
+			if (data == null) throw new ArgumentNullException(nameof(data));
+			if (string.IsNullOrEmpty(data.RowKey)) throw new ArgumentNullException(nameof(data.RowKey));
+
+			try
+			{
+
+				var operation = TableOperation.Replace(data);
+
+
+				var res = CTable.ExecuteAsync(operation).Result;
+
+			}
+			catch (Exception ex)
+			{
+
+				throw ex;
+
+			}
+			finally
+			{
+				// DataWriter.DelLock(Role.RoleKey, Collection, id);
+			}
 
-                data.ETag = "*";
-            }
-            try
-            {
 
-                var operation = TableOperation.InsertOrReplace(data);
+		}
 
-                var tableRequestOptions = new TableRequestOptions
-                {
-                    RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 4),
 
-                };
 
-                var res = CTable.ExecuteAsync(operation, tableRequestOptions, null).Result;
+		/// <summary>
+		/// Update data.
+		/// 修改資料
+		/// </summary>
+		/// <param name="data"></param>
+		/// <returns></returns>
+		public Operator Update(ITableEntity data)
+		{
+			//檢查參數是否傳入正確
+			if (data == null) throw new ArgumentNullException(nameof(data));
+			if (string.IsNullOrEmpty(data.RowKey)) throw new ArgumentNullException(nameof(data.RowKey));
+			if (string.IsNullOrEmpty(data.ETag))
+			{
 
-            }
-            catch (Exception ex)
-            {
+				data.ETag = "*";
+			}
+			try
+			{
 
-                throw ex;
+				var operation = TableOperation.InsertOrReplace(data);
 
-            }
-            finally
-            {
-                // DataWriter.DelLock(Role.RoleKey, Collection, id);
-            }
+				var tableRequestOptions = new TableRequestOptions
+				{
+					RetryPolicy = new LinearRetry(TimeSpan.FromMilliseconds(500), 4),
 
+				};
 
-            return this;
+				var res = CTable.ExecuteAsync(operation, tableRequestOptions, null).Result;
 
-        }
+			}
+			catch (Exception ex)
+			{
 
+				throw ex;
 
-        /// <summary>
-        /// Delete data.
-        /// 刪除資料
-        /// </summary>
-        /// <param name="rowKey"></param>
-        /// <param name="partitionKey"></param>
-        /// <returns></returns>
-        public bool Delete(string rowKey, string partitionKey)
-        {
+			}
+			finally
+			{
+				// DataWriter.DelLock(Role.RoleKey, Collection, id);
+			}
 
-            //檢查參數是否傳入正確
-            if (string.IsNullOrEmpty(rowKey)) throw new ArgumentNullException(nameof(rowKey));
 
-            try
-            {
-                TableOperation operation = TableOperation.Delete(new DTableEntity { RowKey = rowKey, PartitionKey = partitionKey, ETag = "*" });
+			return this;
 
-                var res = CTable.ExecuteAsync(operation).Result;
+		}
 
-                return true;
-            }
-            catch (Exception ex)
-            {
 
-                return !this.IsDataExisted(rowKey, partitionKey);
+		/// <summary>
+		/// Delete data.
+		/// 刪除資料
+		/// </summary>
+		/// <param name="rowKey"></param>
+		/// <param name="partitionKey"></param>
+		/// <returns></returns>
+		public bool Delete(string rowKey, string partitionKey)
+		{
 
-            }
-            finally
-            {
-                // DataWriter.DelLock(Role.RoleKey, Collection, id);
-            }
+			//檢查參數是否傳入正確
+			if (string.IsNullOrEmpty(rowKey)) throw new ArgumentNullException(nameof(rowKey));
 
+			try
+			{
+				TableOperation operation = TableOperation.Delete(new DTableEntity { RowKey = rowKey, PartitionKey = partitionKey, ETag = "*" });
 
-        }
+				var res = CTable.ExecuteAsync(operation).Result;
 
-        /// <summary>
-        /// Delete data.
-        /// 刪除資料
-        /// </summary>
-        /// <param name="rowKey"></param>
-        /// <param name="partitionKey"></param>
-        /// <param name="eTag"></param>
-        /// <returns></returns>
-        public bool DeleteWithEtag(string rowKey, string partitionKey, string eTag = "*")
-        {
+				return true;
+			}
+			catch (Exception ex)
+			{
 
-            //檢查參數是否傳入正確
-            if (string.IsNullOrEmpty(rowKey)) throw new ArgumentNullException(nameof(rowKey));
+				return !this.IsDataExisted(rowKey, partitionKey);
 
-            try
-            {
-                TableOperation operation = TableOperation.Delete(new DTableEntity { RowKey = rowKey, PartitionKey = partitionKey, ETag = eTag });
+			}
+			finally
+			{
+				// DataWriter.DelLock(Role.RoleKey, Collection, id);
+			}
 
-                var res = CTable.ExecuteAsync(operation).Result;
 
-                return true;
-            }
-            catch (Exception ex)
-            {
+		}
 
-                return false;
+		/// <summary>
+		/// Delete data.
+		/// 刪除資料
+		/// </summary>
+		/// <param name="rowKey"></param>
+		/// <param name="partitionKey"></param>
+		/// <param name="eTag"></param>
+		/// <returns></returns>
+		public bool DeleteWithEtag(string rowKey, string partitionKey, string eTag = "*")
+		{
 
-            }
-            finally
-            {
-                // DataWriter.DelLock(Role.RoleKey, Collection, id);
-            }
+			//檢查參數是否傳入正確
+			if (string.IsNullOrEmpty(rowKey)) throw new ArgumentNullException(nameof(rowKey));
 
+			try
+			{
+				TableOperation operation = TableOperation.Delete(new DTableEntity { RowKey = rowKey, PartitionKey = partitionKey, ETag = eTag });
 
-        }
+				var res = CTable.ExecuteAsync(operation).Result;
 
+				return true;
+			}
+			catch (Exception ex)
+			{
 
-        /// <summary>
-        /// Is DataExisted
-        /// </summary>
-        /// <param name="rowKey"></param>
-        /// <param name="partitionKey"></param>
-        /// <param name="eTag"></param>
-        /// <returns></returns>
-        public bool IsDataExisted(string rowKey, string partitionKey)
-        {
-            if (string.IsNullOrEmpty(rowKey)) throw new ArgumentNullException(nameof(rowKey));
+				return false;
 
-            TableQuery<DynamicTableEntity> tableQuery = new TableQuery<DynamicTableEntity>();
+			}
+			finally
+			{
+				// DataWriter.DelLock(Role.RoleKey, Collection, id);
+			}
 
-            tableQuery.FilterString = TableQuery.CombineFilters(
-                                        TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, partitionKey),
-                                        TableOperators.And,
-                                        TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, rowKey));
 
+		}
 
-            EntityResolver<string> resolver = (pk, rk, ts, props, etag) =>
-            (
-                                rk + "," + pk
-            );
 
-            List<string> res = new List<string>();
-            TableContinuationToken continuationToken = null;
-            do
-            {
-                TableQuerySegment<string> tableQueryResult =
-                     CTable.ExecuteQuerySegmentedAsync(tableQuery, resolver, continuationToken).Result;
+		/// <summary>
+		/// Is DataExisted
+		/// </summary>
+		/// <param name="rowKey"></param>
+		/// <param name="partitionKey"></param>
+		/// <param name="eTag"></param>
+		/// <returns></returns>
+		public bool IsDataExisted(string rowKey, string partitionKey)
+		{
+			if (string.IsNullOrEmpty(rowKey)) throw new ArgumentNullException(nameof(rowKey));
 
-                continuationToken = tableQueryResult.ContinuationToken;
+			TableQuery<DynamicTableEntity> tableQuery = new TableQuery<DynamicTableEntity>();
 
-                res.AddRange(tableQueryResult.Results.Where(x => !string.IsNullOrEmpty(x)).ToList());
-            } while (continuationToken != null);
+			tableQuery.FilterString = TableQuery.CombineFilters(
+										TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, partitionKey),
+										TableOperators.And,
+										TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, rowKey));
 
-            return res.Count > 0;
 
-        }
+			EntityResolver<string> resolver = (pk, rk, ts, props, etag) =>
+			(
+								rk + "," + pk
+			);
 
+			List<string> res = new List<string>();
+			TableContinuationToken continuationToken = null;
+			do
+			{
+				TableQuerySegment<string> tableQueryResult =
+					 CTable.ExecuteQuerySegmentedAsync(tableQuery, resolver, continuationToken).Result;
 
+				continuationToken = tableQueryResult.ContinuationToken;
 
-        /// <summary>
-        /// 取得所有資料總數
-        /// </summary>
-        /// <returns></returns>
-        public decimal AllDataCount()
-        {
+				res.AddRange(tableQueryResult.Results.Where(x => !string.IsNullOrEmpty(x)).ToList());
+			} while (continuationToken != null);
 
-            TableQuery<DynamicTableEntity> tableQuery = new TableQuery<DynamicTableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.NotEqual, "")).Select(new string[] { "RowKey" });
+			return res.Count > 0;
 
-            EntityResolver<string> resolver = (pk, rk, ts, props, etag) => props.ContainsKey("RowKey") ? props["RowKey"].StringValue : null;
+		}
 
 
-            var count = 0;
-            TableContinuationToken continuationToken = null;
-            do
-            {
-                TableQuerySegment<string> tableQueryResult =
-                     CTable.ExecuteQuerySegmentedAsync(tableQuery, resolver, continuationToken).Result;
 
-                continuationToken = tableQueryResult.ContinuationToken;
-                count += tableQueryResult.Results.Count;
+		/// <summary>
+		/// 取得所有資料總數
+		/// </summary>
+		/// <returns></returns>
+		public decimal AllDataCount()
+		{
 
+			TableQuery<DynamicTableEntity> tableQuery = new TableQuery<DynamicTableEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.NotEqual, "")).Select(new string[] { "RowKey" });
 
-            } while (continuationToken != null);
-            
-            return count;
-        }
+			EntityResolver<string> resolver = (pk, rk, ts, props, etag) => props.ContainsKey("RowKey") ? props["RowKey"].StringValue : null;
 
 
-        #region Dtor
-        ~Operator()
-        {
-            CSAgent = null;
-            CTClient = null;
-            CTable = null;
-            GC.Collect();
-        }
-        #endregion
-    }
+			var count = 0;
+			TableContinuationToken continuationToken = null;
+			do
+			{
+				TableQuerySegment<string> tableQueryResult =
+					 CTable.ExecuteQuerySegmentedAsync(tableQuery, resolver, continuationToken).Result;
+
+				continuationToken = tableQueryResult.ContinuationToken;
+				count += tableQueryResult.Results.Count;
+
+
+			} while (continuationToken != null);
+
+			return count;
+		}
+
+
+		#region Dtor
+		~Operator()
+		{
+			CSAgent = null;
+			CTClient = null;
+			CTable = null;
+			GC.Collect();
+		}
+		#endregion
+	}
 
 
 }
